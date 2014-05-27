@@ -5,3 +5,5 @@ CMakeCache.txt
 CMakeFiles/
 Makefile
 cmake_install.cmake
+StreamingTest
+default.yml
