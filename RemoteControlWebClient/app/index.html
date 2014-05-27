@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+      <meta charset="utf-8">
+      <title>CVRemote Client</title>
+      <link rel="stylesheet" href="/style.css" media="screen">
+      <script src="/engine.io.js"></script>
+    </head>
+    <body>
+      <img src="" id="debug_img"></div>
+      <button onclick="window._stream = true; socket.send('GET IMG');">STREAM</button>
+      <button onclick="window._stream = false">STOP</button>
+        <script>
+        var socket = new eio.Socket();
+        window._stream = false;
+
+        socket.on('open', function(){
+          socket.on('message', function(data){
+            var msg = JSON.parse(data);
+            if (msg.param == 'IMG') {
+                document.getElementById("debug_img").src = "data:image/png;base64,"+msg.value;
+                if (window._stream) {
+                    setTimeout(function() {
+                        socket.send("GET IMG");
+                    }, 15);
+                }
+            } else {
+                console.log(msg.param+" / "+msg.value);
+            }
+          });
+          socket.on('close', function(){});
+        });
+        </script>
+    </body>
+</html>
