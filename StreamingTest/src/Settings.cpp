@@ -5,7 +5,7 @@ using namespace cv;
 using namespace std;
 
 Settings::Settings() {
-    nextId = '0';
+    nextId = 'a'; // we reserve 0-9
 }
 
 bool Settings::save(string name) {
@@ -43,6 +43,10 @@ char Settings::paramId(string param) {
 
 void Settings::set(string param, string val) {
     (*(params.at(param).callback))(PARAM_SET, val);
+}
+
+void Settings::add(string k, paramCallback _c, bool _s, char id) {
+    params.insert(pair<string, SettingsParam>(k, SettingsParam(_c, _s, id)));
 }
 
 void Settings::add(string k, paramCallback _c, bool _s) {

@@ -4,15 +4,21 @@
 using namespace std;
 using namespace cv;
 
-RemoteControl::RemoteControl(int port, Settings * s) {
-    settings = s;
+RemoteControl::RemoteControl(int port, string _settingsFile) {
+    settingsFile = _settingsFile;
+    settings = new Settings();
+    settings->add("PARAMS",   NULL, false, '0');
+    settings->add("SAVE",     NULL, false, '1');
+    settings->add("IMG",      NULL, false, '2');
+    settings->add("SIZE",     NULL, false, '3');
+
     running = true;
     slen = sizeof(si_other);
     if ((listenSock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
         die("socket", 1);
     }
 
-    is_data_ready = 0;
+    image_requested = 0;
 
     memset((char *) &si_me, 0, sizeof(si_me));
 
@@ -60,7 +66,6 @@ void * RemoteControl::listen(void * parent) {
         cout << "Handling '" << req << "' (" << req.length() << ")" << endl;
         // TODO:
         //   - toggle debug console stuff
-        //   - move private functions and settings class to remote control
         //   - Make library (and use with cmake in other project)
 
         // Handle Request...
@@ -74,26 +79,33 @@ void * RemoteControl::listen(void * parent) {
                 string query = self->settings->query();
                 query = prefix + query;
                 if (sendto(self->listenSock, query.c_str(), query.length(), 0, (struct sockaddr*) &(self->si_other), self->slen) == -1) {
-                    self->die("request sendto()", 1);
+                    self->die("params sendto()", 1);
                 }
             } else if (param == "IMG") {
                 // Special: image
-                while (!self->is_data_ready) {
+                self->image_requested = 1;
+                while (self->image_requested != 2) {
                     usleep(1);
                 }
 
+                pthread_mutex_lock(&(self->mutex));
                 Mat out;
                 Mat prefixMat(1, 1, self->sendFrame.type());
                 prefixMat.at<int>(0,0) = prefix;
                 hconcat(prefixMat, self->sendFrame, out);
-                pthread_mutex_lock(&(self->mutex));
                 // data should be smaller than 254x254 (65535 bytes) according to UDP spec?
                 if (sendto(self->listenSock, out.data, self->imgSize+1, 0, (struct sockaddr*) &(self->si_other), self->slen) == -1) {
                     self->die("image sendto()", 1);
                 }
-
-                self->is_data_ready = 0;
+                self->image_requested = 0;
                 pthread_mutex_unlock(&(self->mutex));
+            } else if (param == "SIZE") {
+                ostringstream _res; 
+                _res << prefix << self->width << " " << self->height << " " << self->elemSize;
+                string res = _res.str();
+                if (sendto(self->listenSock, res.c_str(), res.length(), 0, (struct sockaddr*) &(self->si_other), self->slen) == -1) {
+                    self->die("size sendto()", 1);
+                }
             } else {
                 // Regular: get value
                 string val = self->settings->get(param);
@@ -106,7 +118,17 @@ void * RemoteControl::listen(void * parent) {
             // SET_param[_value]
             int paramNameEnd = req.find(' ', 4);
             bool no_val = (paramNameEnd == -1) || (paramNameEnd == req.length()-1);
-            self->settings->set(req.substr(4, paramNameEnd-4), no_val ? "" : req.substr(paramNameEnd+1));
+            string param = req.substr(4, paramNameEnd-4);
+            string val = no_val ? "" : req.substr(paramNameEnd+1);
+            if (param == "SAVE") {
+                if (no_val) {
+                    self->settings->save(self->settingsFile);
+                } else {
+                    self->settings->save(val);
+                }
+            } else {
+                self->settings->set(param, val);
+            }
         }
         pthread_testcancel();
     }

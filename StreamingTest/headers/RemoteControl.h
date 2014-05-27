@@ -16,9 +16,10 @@ class RemoteControl {
     static void *listen(void *arg);
 public:
     bool running;
-    RemoteControl(int port, Settings * s);
+    std::string settingsFile;
+    RemoteControl(int, std::string);
     void setDebugImage(cv::Mat &img);
-    void die(std::string s, int c);
+    void die(std::string, int);
 
     pthread_t thread;
     pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -26,7 +27,8 @@ public:
     struct sockaddr_in si_me;
     struct sockaddr_in si_other;
     socklen_t slen;
-    int listenSock, is_data_ready;
+    int listenSock;
+    int image_requested;
 
     Settings * settings;
 

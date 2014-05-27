@@ -33,6 +33,7 @@ public:
     bool save(string);
     bool load(string);
     void add(string, paramCallback, bool);
+    void add(string, paramCallback, bool, char);
     void set(string, string);
     string get(string);
     string query();
