@@ -6,6 +6,21 @@ body, html {
 body {
   background: #0e0e0e;
 }
+
+#top,#bottom {
+    width: 500px;
+    margin: 10px auto;
+}
+
+#bottom {
+    width: 490px;
+    background-color:#ffee00;
+    padding: 5px;
+}
+
+
 #debug_img {
   border: 1px solid #fff;
+  width: 498px;
+  min-height: 200px;
 }

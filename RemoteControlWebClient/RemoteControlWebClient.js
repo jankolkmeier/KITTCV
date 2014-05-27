@@ -42,7 +42,6 @@ var CVRemoteClient = function(_port, _ip) {
     this.ip = _ip || "127.0.0.1";
     this.src = dgram.createSocket('udp4');
     this.receivedParams = false;
-    this.receivedSize = false;
     this.params = {};
     this.img_width = 0;
     this.img_height = 0;
@@ -56,8 +55,7 @@ util.inherits(CVRemoteClient, EventEmitter);
 CVRemoteClient.prototype.handleMessage = function(buf, rinfo) {
     var prefix = buf.slice(0,1).toString('ascii');
     var content = buf.slice(1);
-    if (!this.receivedParams ||
-        (this.params[prefix] && this.params[prefix] == "PARAMS")) {
+    if (prefix == '0') {
         var params = content.toString('ascii').split("\n");
         this.params = {};
         for (var i = 0; i < params.length; i++) {
@@ -66,26 +64,31 @@ CVRemoteClient.prototype.handleMessage = function(buf, rinfo) {
                 this.params[param[0]] = param[1];
             }
         }
-        this.receivedParams = true;
         console.log(util.inspect(this.params));
-        this.send("GET SIZE");
+        this.receivedParams = true;
     } else if (this.receivedParams) {
         var param = this.params[prefix];
-        if (param == "IMG" && this.receivedSize) {
-            var png = new PNG(content, this.img_width, this.img_height, 'gray', 8);
-            png.encode(function(data, err) {
-                if (err) console.log('Error: ' + error.toString());
-                else broadcast({
-                    param: param,
-                    value: data.toString('base64')
+        console.log("param: "+param);
+        if (param == "IMG") {
+            if (content.length != this.img_width * this.img_height) {
+                console.log("Wrong pix count, requesting size");
+                console.log(content.length + " vs " + this.img_width + "x" + this.img_height + "=" + this.img_width * this.img_height);
+                this.send("GET SIZE");
+            } else {
+                var png = new PNG(content, this.img_width, this.img_height, 'gray', 8);
+                png.encode(function(data, err) {
+                    if (err) console.log('Error: ' + error.toString());
+                    else broadcast({
+                        param: param,
+                        value: data.toString('base64')
+                    });
                 });
-            });
+            }
         } else if (param == "SIZE") {
             var vals = content.toString('ascii').split(' ');
             this.img_width = parseInt(vals[0]);
             this.img_height = parseInt(vals[1]);
             console.log('New img size: '+this.img_width+'x'+this.img_height);
-            this.receivedSize = true;
             /*
             broadcast({
                 param: param,
@@ -114,7 +117,6 @@ CVRemoteClient.prototype.send = function(m) {
 
 CVRemoteClient.prototype.init = function() {
     this.receivedParams = false;
-    this.receivedSize = false;
     this.params = {};
     this.send("GET PARAMS");
 }
