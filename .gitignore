@@ -1,0 +1,7 @@
+*-build/
+node_modules
+*.swp
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
