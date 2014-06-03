@@ -6,6 +6,7 @@ CMakeLists.txt.user
 CMakeFiles/
 Makefile
 cmake_install.cmake
-StreamingTest
 default.yml
+CircleMarkerTracking/CircleMarkerTracking
+StreamingTest/StreamingTest
 

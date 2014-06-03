@@ -63,7 +63,7 @@ void * RemoteControl::listen(void * parent) {
         pbuf[recv_len] = '\0';
         string req(pbuf);
 
-        cout << "Handling '" << req << "' (" << req.length() << ")" << endl;
+        //cout << "Handling '" << req << "' (" << req.length() << ")" << endl;
         // TODO:
         //   - toggle debug console stuff
         //   - Make library (and use with cmake in other project)

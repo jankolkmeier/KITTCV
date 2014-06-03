@@ -95,6 +95,11 @@ CVRemoteClient.prototype.handleMessage = function(buf, rinfo) {
                 value: content.toString('ascii')
             });
             */
+        } else {
+            broadcast({
+                param: param,
+                value: content.toString()
+            });
         }
     } else {
         this.send("GET PARAMS");

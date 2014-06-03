@@ -18,9 +18,18 @@ body {
     padding: 5px;
 }
 
+#log {
+    height: 300px;
+    color: #000;
+    background: #fff;
+    padding: 5px;
+    margin: 10px 0 0 0;
+    font-family: monospace;
+    overflow-y: scroll;
+}
 
 #debug_img {
   border: 1px solid #fff;
   width: 498px;
-  min-height: 200px;
+  min-height: 100px;
 }

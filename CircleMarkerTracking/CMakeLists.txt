@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(CircleMarkerTracking)
 
 set(CircleMarkerTracking_TEST 1)
+set(CircleMarkerTracking_GUI 0)
 
 file(GLOB SRC ${PROJECT_SOURCE_DIR}/src/*.cpp)
 file(GLOB HEADERS ${PROJECT_SOURCE_DIR}/headers/*.h)     

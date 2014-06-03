@@ -1,45 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" ng-app="remoteControlApp">
     <head>
       <meta charset="utf-8">
       <title>CVRemote Client</title>
       <link rel="stylesheet" href="/style.css" media="screen">
       <script src="/engine.io.js"></script>
+      <script src="/jquery.min.js"></script>
+      <script src="/angular.min.js"></script>
+      <script src="/controller.js"></script>
     </head>
     <body>
-      <div id="main">
+      <div id="main" ng-controller="RemoteCTRL">
         <div id="top">
-          <img src="" id="debug_img">
+          <img ng-src="{{'data:image/png;base64,'+img}}" id="debug_img">
         </div>
         <div id="bottom">
-          <button onclick="socket.send('GET PARAMS');">PARAMS</button>
-          <button onclick="window._stream = false; socket.send('GET IMG');">FRAME</button>
-          <button onclick="window._stream = true; socket.send('GET IMG');">STREAM</button>
-          <button onclick="window._stream = false">STOP</button>
+          <button ng-click="getParams()">PARAMS</button>
+          <button ng-click="getFrame()">FRAME</button>
+          <button ng-click="stream = true; getFrame();">STREAM</button>
+          <button ng-click="stream = false;">STOP</button>
+          <br />
+          <input type="text" ng-model="query"><button ng-click="send()">SEND</button>
+          <table id="profileTab">
+            <tr ng-repeat='(key, val) in timers track by key'>
+                <td>{{key}}: </td><td>{{val}}</td>
+            </tr>
+          </table>
+          <div id="log">
+            {{log}}
+          </div>
         </div>
       </div>
-
-<script>
-var socket = new eio.Socket();
-window._stream = false;
-
-socket.on('open', function(){
-  socket.on('message', function(data){
-    var msg = JSON.parse(data);
-    if (msg.param == 'IMG') {
-        document.getElementById("debug_img").src = "data:image/png;base64,"+msg.value;
-        if (window._stream) {
-            setTimeout(function() {
-                socket.send("GET IMG");
-            }, 15);
-        }
-    } else {
-        console.log(msg.param+" / "+msg.value);
-    }
-  });
-  socket.on('close', function(){});
-});
-</script>
-
     </body>
 </html>

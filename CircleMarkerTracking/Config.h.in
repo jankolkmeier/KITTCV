@@ -1,1 +1,2 @@
 #define CircleMarkerTracking_TEST @CircleMarkerTracking_TEST@
+#define CircleMarkerTracking_GUI @CircleMarkerTracking_GUI@

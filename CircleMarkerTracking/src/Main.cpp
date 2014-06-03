@@ -3,7 +3,6 @@
 
 #include "Config.h"
 #include "MainTask.h"
-#include "TestCircleMarkerDetectionTask.h"
 #include "TrackingTestTask.h"
 
 CVTask * task;
