@@ -96,6 +96,8 @@ CVRemoteClient.prototype.handleMessage = function(buf, rinfo) {
             });
             */
         }
+    } else {
+        this.send("GET PARAMS");
     }
 
     console.log("Recieved data: "+prefix+" ("+content.length+")");
