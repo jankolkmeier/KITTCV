@@ -10,7 +10,7 @@ var fileServer = new static.Server('./app');
 
 var http = require('http').createServer(function(request, response) {
     request.addListener('end', function () {
-        console.log("Serve file");
+        //console.log("Serve file");
         fileServer.serve(request, response);
     }).resume();
 }).listen(8080);
@@ -28,7 +28,7 @@ function broadcast(msg) {
 server.on('connection', function(socket) {
     sockets.push(socket);
     socket.on('message', function(msg) {
-        console.log(">"+msg);
+        //console.log(">"+msg);
         client0.send(msg);
     });
     socket.on('close', function() {
@@ -68,11 +68,11 @@ CVRemoteClient.prototype.handleMessage = function(buf, rinfo) {
         this.receivedParams = true;
     } else if (this.receivedParams) {
         var param = this.params[prefix];
-        console.log("param: "+param);
+        //console.log("param: "+param);
         if (param == "IMG") {
             if (content.length != this.img_width * this.img_height) {
-                console.log("Wrong pix count, requesting size");
-                console.log(content.length + " vs " + this.img_width + "x" + this.img_height + "=" + this.img_width * this.img_height);
+                //console.log("Wrong pix count, requesting size");
+                //console.log(content.length + " vs " + this.img_width + "x" + this.img_height + "=" + this.img_width * this.img_height);
                 this.send("GET SIZE");
             } else {
                 var png = new PNG(content, this.img_width, this.img_height, 'gray', 8);
@@ -88,7 +88,7 @@ CVRemoteClient.prototype.handleMessage = function(buf, rinfo) {
             var vals = content.toString('ascii').split(' ');
             this.img_width = parseInt(vals[0]);
             this.img_height = parseInt(vals[1]);
-            console.log('New img size: '+this.img_width+'x'+this.img_height);
+            //console.log('New img size: '+this.img_width+'x'+this.img_height);
             /*
             broadcast({
                 param: param,
@@ -105,7 +105,7 @@ CVRemoteClient.prototype.handleMessage = function(buf, rinfo) {
         this.send("GET PARAMS");
     }
 
-    console.log("Recieved data: "+prefix+" ("+content.length+")");
+    //console.log("Recieved data: "+prefix+" ("+content.length+")");
 }
 
 CVRemoteClient.prototype.setPort = function(port) {
@@ -128,5 +128,7 @@ CVRemoteClient.prototype.init = function() {
     this.send("GET PARAMS");
 }
 
-var client0 = new CVRemoteClient();
+//var client0 = new CVRemoteClient();
+var client0 = new CVRemoteClient(9988, "192.168.6.112");
+
 client0.init();
