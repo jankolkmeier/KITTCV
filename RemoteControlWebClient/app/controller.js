@@ -30,6 +30,9 @@ app.factory('socket', function($rootScope) {
 
 function RemoteCTRL($scope, socket) {
     $scope.timers = {};
+    $scope.xpos  = 0;
+    $scope.ypos  = 0;
+    $scope.zpos  = 0;
 
     $scope.log = "[START]";
     $scope.img = "iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAYAAAD0In+KAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3gYDDC8yqsQdOAAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAAC0lEQVQI12NggAIAAAkAAWMqFg0AAAAASUVORK5CYII=";
@@ -51,6 +54,7 @@ function RemoteCTRL($scope, socket) {
 
     socket.on('message', function(data){
         var msg = JSON.parse(data);
+        console.log(msg);
         if (msg.param == 'IMG') {
             //$scope.img = "data:image/png;base64,"+msg.value;
             $scope.img = msg.value;
@@ -69,6 +73,11 @@ function RemoteCTRL($scope, socket) {
                     $scope.timers[timer[0]] = timer[1];
                 }
             }
+        } else if (msg.param == 'pos') {
+            var poss = msg.value.split(" ");
+            $scope.xpos = poss[0];
+            $scope.ypos = poss[1];
+            $scope.zpos = poss[2];
         } else {
             console.log(data);
             $scope.log = data + "\n" + $scope.log;

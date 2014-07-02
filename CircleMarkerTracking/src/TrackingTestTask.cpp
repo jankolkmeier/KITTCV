@@ -4,6 +4,7 @@
 #include "Settings.h"
 #include "Config.h"
 #include "Profiling.h"
+#include "Marker.h"
 
 const int framesAvg = 5;
 int frameCount;
@@ -17,6 +18,10 @@ int tTotal[framesAvg];
 
 RemoteControl * ctrl;
 
+float x = 0;
+float y = 0;
+float z = 0;
+
 int port = 9988;
 const char * settingsFile = "default.yml";
 
@@ -27,10 +32,13 @@ double _scale = 0.2;
 Mat output, reduced;
 Mat shadow;
 
+Marker m0;
+
 void reduceImage(Mat &src, Mat &dst, float scale);
 string paramScale(int action, string val);
 string paramFlip(int action, string val);
 string paramProfile(int action, string val);
+string paramPos(int action, string val);
 
 TrackingTestTask::TrackingTestTask(int some_param) : CVTask() {
     frameCount = 0;
@@ -51,6 +59,7 @@ TrackingTestTask::TrackingTestTask(int some_param) : CVTask() {
 
     ctrl->settings->add("flip", &paramFlip, true);
     ctrl->settings->add("scale", &paramScale, true);
+    ctrl->settings->add("pos", &paramPos, false);
     ctrl->settings->add("profile", &paramProfile, false);
 
     //src = imread("circletest4.png");
@@ -76,15 +85,15 @@ TrackingTestTask::TrackingTestTask(int some_param) : CVTask() {
     fs.release();
 
     //cap = new VideoCapture("resources/test/test210502.mp4");
-    //cap = new VideoCapture("resources/test/test210501.mp4");
-    cap = new VideoCapture(0);
+    cap = new VideoCapture("resources/test/test210501.mp4");
+    //cap = new VideoCapture(1);
     if (!cap->isOpened()) {
         error = true;
         cout << "Cannot open Capture Device" << endl;
         return;
     }
-    cap->set(CV_CAP_PROP_FRAME_WIDTH, 320);
-    cap->set(CV_CAP_PROP_FRAME_HEIGHT, 240);
+    cap->set(CV_CAP_PROP_FRAME_WIDTH, 640);
+    cap->set(CV_CAP_PROP_FRAME_HEIGHT, 480);
 
     Mat tmp;
     cap->read(tmp);
@@ -96,8 +105,8 @@ TrackingTestTask::TrackingTestTask(int some_param) : CVTask() {
     //ctrl->settings->save(settingsFile); // Save optional to instantiate file once
     ctrl->settings->load(settingsFile); // Load Needed to set reduced through paramScale!
 
-    rvec = Mat(3,1,cv::DataType<double>::type);
-    tvec = Mat(3,1,cv::DataType<double>::type);
+    rvec = Mat(3,1,DataType<double>::type);
+    tvec = Mat(3,1,DataType<double>::type);
 
     defDistCoeffs = Mat(4,1,cv::DataType<double>::type);
     defDistCoeffs.at<double>(0) = 0;
@@ -130,11 +139,14 @@ void TrackingTestTask::loop() {
 
     t0 = GetTimeMs64();
     if (!cap->read(input)) {
-        cap->release();
-        cout << "No more img data" << endl;
-        error = true;
+        //cap->release();
+        //error = true;
+        //return;
+        cout << "No more img data, restarting" << endl;
+        cap->set(CV_CAP_PROP_POS_FRAMES, 1);
         return;
     }
+
     tGrabbing[frameCount] = (int)(GetTimeMs64() - t0);
     //input = src;
     //output = frame;
@@ -207,35 +219,21 @@ void TrackingTestTask::loop() {
                 scene.push_back(Point2d(approx[3].x, approx[3].y));
                 scene.push_back(Point2d(approx[0].x, approx[0].y));
                 scene.push_back(Point2d(approx[1].x, approx[1].y));
-
+                // distCoeff?
                 solvePnP(object3, scene, cameraMatrix, defDistCoeffs, rvec, tvec, false, CV_ITERATIVE);// CV_P3P, CV_EPNP, CV_ITERATIVE
 
-
-
-                Mat R;
-                Rodrigues(rvec, R); // R is 3x3
-                R = R.t();  // rotation of inverse
-                Mat t = -R * tvec; // translation of inverse
-                Mat T(4, 4, R.type()); // T is 4x4
-                T(Range(0,3), Range(0,3)) = R * 1; // copies R into T
-                T(Range(0,3), Range(3,4)) = t * 1; // copies tvec into T
-                // fill the last row of T (NOTE: depending on your types, use float or double)
-                double *p = T.ptr<double>(3);
-                p[0] = p[1] = p[2] = 0;
-                p[3] = 1;
-
-                cout << t << endl;
-                // T is a 4x4 matrix with the pose of the camera in the object frame
-
-
-
-
-
+                m0.calculateTransform(rvec, tvec);
+                //cout << t << endl;
+                //cout << t.size() << endl;
+                x = m0.t.at<double>(0, 0);
+                y = m0.t.at<double>(0, 1);
+                z = m0.t.at<double>(0, 2);
+//                #if CircleMarkerTracking_GUI == 1 // if want output image
                 std::vector<Point2d> scene_corners3(4);
                 projectPoints(object3, rvec, tvec, cameraMatrix, defDistCoeffs, scene_corners3);
-                projectPoints(cosx, rvec, tvec, cameraMatrix, distCoeffs, cosx_img);
-                projectPoints(cosy, rvec, tvec, cameraMatrix, distCoeffs, cosy_img);
-                projectPoints(cosz, rvec, tvec, cameraMatrix, distCoeffs, cosz_img);
+                projectPoints(cosx, rvec, tvec, cameraMatrix, defDistCoeffs, cosx_img);
+                projectPoints(cosy, rvec, tvec, cameraMatrix, defDistCoeffs, cosy_img);
+                projectPoints(cosz, rvec, tvec, cameraMatrix, defDistCoeffs, cosz_img);
 
                 // Lines around marker
                 line(output, scene_corners3[0], scene_corners3[1], Scalar(255, 0, 255), 1);
@@ -247,6 +245,7 @@ void TrackingTestTask::loop() {
                 line(output, cosx_img[0], cosx_img[1], Scalar(255,0,0), 2);
                 line(output, cosy_img[0], cosy_img[1], Scalar(0,255,0), 2);
                 line(output, cosz_img[0], cosz_img[1], Scalar(0,0,255), 2);
+//                #endif
             }
         }
     }
@@ -276,6 +275,16 @@ void reduceImage(Mat &src, Mat &dst, float scale) {
     if (_flip)
         flip(tmp, tmp, 1);
     resize(tmp, dst, Size(), scale, scale, INTER_NEAREST);
+}
+
+string paramPos(int action, string val) {
+    if (action == PARAM_GET) {
+        return m0.serialize();
+        //ostringstream buf;
+        //buf << round(x*100)/100.0f << " " << round (y*100)/100.0f << " " << round (z*100)/100.0f;
+        //return buf.str();
+    }
+    return "";
 }
 
 string paramScale(int action, string val) {

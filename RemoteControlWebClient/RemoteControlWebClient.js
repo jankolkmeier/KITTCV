@@ -28,7 +28,7 @@ function broadcast(msg) {
 server.on('connection', function(socket) {
     sockets.push(socket);
     socket.on('message', function(msg) {
-        //console.log(">"+msg);
+        console.log(">"+msg);
         client0.send(msg);
     });
     socket.on('close', function() {
@@ -105,7 +105,7 @@ CVRemoteClient.prototype.handleMessage = function(buf, rinfo) {
         this.send("GET PARAMS");
     }
 
-    //console.log("Recieved data: "+prefix+" ("+content.length+")");
+    console.log("Recieved data: "+prefix+" ("+content.length+")");
 }
 
 CVRemoteClient.prototype.setPort = function(port) {
@@ -128,7 +128,7 @@ CVRemoteClient.prototype.init = function() {
     this.send("GET PARAMS");
 }
 
-//var client0 = new CVRemoteClient();
-var client0 = new CVRemoteClient(9988, "192.168.6.112");
+var client0 = new CVRemoteClient();
+//var client0 = new CVRemoteClient(9988, "192.168.6.112");
 
 client0.init();
